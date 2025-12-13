@@ -21,12 +21,14 @@ using DataFrames
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 export Events, Data_Firms, Data_Markets, Timeline, Data_Window
 export Model_Expected_Returns
+export event_estimate
 
 
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Includes
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 include("types.jl")
+include("estimation.jl")
 
 
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -35,3 +35,5 @@ event_window_data = Data_Window(
   shift,
 )
 
+## Estimation:
+event_estimates = event_estimate.(event_window_data, expected_return_models, Ref(timeline))

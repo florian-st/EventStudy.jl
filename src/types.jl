@@ -304,3 +304,28 @@ function intersect_where(x::AbstractVector, y::AbstractVector)
   ## Return the positions of x in y.
   findall(in(y), x)
 end
+
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+## Estimaton
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+struct Event_Estimate
+  data::Data_Window
+  success::Bool
+  thinvar::BitVector
+  cum_periods::Vector{Int64}
+  ## Model parameters:
+  parameter_names::Vector{String}
+  parameter_values::Vector{Float64}
+  parameter_p_values::Vector{Float64}
+  ## Stuff for the tests:
+  L1::Int64
+  k::Int64
+  sigma_sqrd::Float64
+  ## NOTE(florian): Correction term to account for forecast
+  ## error. Used to calculate SAR. Meitioned in patell1976, this
+  ## form taken from kolari2010 (21.05.2023, 11:34)
+  adjustment::Vector{Float64}
+  r::Vector{Float64}
+  er::Vector{Float64}
+  ar::Vector{Float64}
+end
