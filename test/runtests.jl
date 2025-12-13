@@ -4,11 +4,20 @@ using EventStudy
 using DataFrames
 using CSV
 
+function get_field(x, g::String, from::Int64, to::Int64, d::Int64, field::Symbol)
+  rows = eachrow(x)
+  idx_abs = findfirst(a -> (a.id_group == g) && (a.idx_from == from) && (a.idx_to == to), rows)
+  y = getproperty(rows[idx_abs], field)
+
+  return (y isa AbstractFloat) ? trunc(y; digits=d) : y
+end
+
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Basic complete Dataset
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Basic data:
-data_events_complete = Events(CSV.read("test/data/events.csv", DataFrame), "id_event", "date", "id_firm", "id_market")
+df_events = CSV.read("test/data/events.csv", DataFrame)
+data_events_complete = Events(df_events, "id_event", "date", "id_firm", "id_market")
 data_markets_complete = Data_Markets(CSV.read("test/data/markets.csv", DataFrame), "id_market", "date", String["ret_m"])
 data_firms_complete = Data_Firms(CSV.read("test/data/firms.csv", DataFrame), "id_firm", "date", String["ret"])
 
@@ -46,4 +55,11 @@ idx_included_overall = idx_estimation_success .* idx_estimate_testable
 events_testable = event_estimates[idx_included_overall]
 hypothesis_data = event_hypothesis_data_create(events_testable, timeline, windows_event)
 
+ids_group = String.(innerjoin(DataFrame(id_event=hypothesis_data.id_event), select(transform(df_events, :id_event => ByRow(string); renamecols=false), [:id_event, :id_group]), on=:id_event).id_group)
+df_tests = hypothesis_tests_run(hypothesis_data, ids_group, windows_event, timeline)
 
+
+@testset "Complete Dataset Basics" begin
+  @test get_field(df_tests.results_caar, "G2", -2, 2, 6, :caar) == 0.047489
+  @test get_field(df_tests.results_caar, "G2", -2, 2, 6, :N) == 9
+end
