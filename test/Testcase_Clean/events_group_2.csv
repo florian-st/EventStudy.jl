@@ -1,0 +1,11 @@
+id_event,id_firm,id_market,date,id_group
+q,Adobe_Systems,M1,1997-04-30,G2
+r,Progressive,M1,1997-07-25,G2
+s,Cincinnati,M1,1997-12-16,G2
+t,Coca-Cola_Enterprises,M1,1998-10-01,G2
+u,Travelers_Group,M1,1998-10-01,G2
+v,Safeway,M1,1998-11-05,G2
+w,Danaher,M1,1998-11-11,G2
+x,Carnival,M1,1998-12-10,G2
+y,AFLAC,M1,1999-04-26,G2
+z,Office_Depot,M1,1999-06-02,G2
