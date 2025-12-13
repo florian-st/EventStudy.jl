@@ -151,3 +151,156 @@ function window_create_largest(x::Vector{Tuple{Int64,Int64}})
   return extrema(values_all)
 end
 
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+## Return Model
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+struct Model_Expected_Returns
+  dependent::Symbol
+  independent::Vector{Symbol}
+end
+
+function variables_get_firm(mdl::Model_Expected_Returns)
+  [mdl.dependent]
+end
+
+function variables_get_market(mdl::Model_Expected_Returns)
+  mdl.independent
+end
+
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+## Estimation Data
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+struct Data_Window
+  ## Identifiers:
+  id::String
+  ## Dates:
+  date_orig::Date
+  date_final::Date
+  date_all::Vector{Union{Nothing,Date}}
+  data::Matrix{Float64}
+  data_col_names::Vector{Symbol}
+end
+
+function Data_Window(template::Timeline, events::Events, firms::Data_Firms, markets::Data_Markets, variables_firm::Vector{Symbol}, variables_market::Vector{Symbol}, shift::Int64)
+  ## TODO(florian): Make sure this works when tings are out of order... (22.05.2023, 08:00)
+
+  ## Locate column positions:
+  variables_all = vcat(variables_market, variables_firm)
+  idx_data_market_variables = intersect_where(variables_market, markets.columns)
+  idx_data_firm_variables = intersect_where(variables_firm, firms.columns)
+  idx_window_market_variables = 1:length(idx_data_market_variables)
+  idx_window_firm_variables = (length(idx_window_market_variables)+1):(length(idx_window_market_variables)+length(idx_data_firm_variables))
+
+  ## NOTE: To keep the estimates in the order of the events while also
+  #allowing subsetting of the data that is statistically likely to be
+  #efficient.  (06.03.2025, 19:07)
+  event_position_lookup = Dict(events.ids .=> eachindex(events.ids))
+  relative_all = vcat(template.estimation_relative, template.event_relative, template.post_relative)
+  n_events = length(events.ids)
+  markets_all = unique(events.markets)
+
+  n_matrix_rows = length(template.relative_to_absolute)
+  n_matrix_cols = length(variables_all)
+  matrix_template = fill(NaN, n_matrix_rows, n_matrix_cols)
+  event_data = Vector{Data_Window}(undef, n_events)
+  counter = 1
+  for m in markets_all
+    idx_market = findall(markets.ids .== m)
+    data_market = @view markets.data[idx_market, :]
+    dateline = @view markets.dates[idx_market]
+
+    ## NOTE(florian): Get all firms that are on the current market. (17.05.2023, 10:33)
+    firms_relevant = unique(events.firms[findall(events.markets .== m)])
+    for f in firms_relevant
+      idx_firm = findall(firms.ids .== f)
+      data_firm = @view firms.data[idx_firm, :]
+      dates_firm = @view firms.dates[idx_firm]
+
+      ## NOTE(florian): Get all Events (17.05.2023, 10:44)
+      idx_dates = findall((events.markets .== m) .* (events.firms .== f))
+      event_dates = @view events.dates[idx_dates]
+      event_ids = @view events.ids[idx_dates]
+
+      for idx_event_date in eachindex(event_dates)
+        ## Initialize stuff:
+        data_window = copy(matrix_template)
+        window_dates = Array{Union{Nothing,Date},1}(nothing, n_matrix_rows)
+        event_date_current_orig = event_dates[idx_event_date]
+        event_id_current = event_ids[idx_event_date]
+
+        ## Locate event day:
+        shift_current = 0
+        idx_event_day = findfirst(dateline .== event_date_current_orig)
+
+        while isnothing(idx_event_day) && (shift_current <= shift)
+          idx_event_day = findfirst(dateline .== (event_date_current_orig + Day(shift_current)))
+          shift_current += 1
+        end
+
+        if isnothing(idx_event_day)
+          ## NOTE(florian): Just jump to creation of
+          ## data_window_final and leave everything empty?
+          ## (22.05.2023, 14:32)
+          event_date_current_final = event_date_current_orig
+          @goto data_assembly
+        end
+
+        ## Locate market data relative to the event day:
+        market_rel = collect(eachindex(dateline) .- idx_event_day)
+        event_date_current_final = dateline[idx_event_day]
+
+        ## Fill data matrix:
+        ## TODO(florian): I'm sure this is nowhere near efficient, look into it later, just get it right for now. (22.05.2023, 14:14)
+        for (i, idx_rel) in enumerate(relative_all)
+          ## 1) Try to locate that relative position in the market data:
+          idx_market_current = findfirst(idx_rel .== market_rel)
+
+          ## 2) Copy market data into the matrix:
+          if !isnothing(idx_market_current)
+            # idx_data_market_variables
+            # idx_data_firm_variables
+            # idx_window_market_variables
+            # idx_window_firm_variables
+            data_window[i, idx_window_market_variables] = data_market[idx_market_current, idx_data_market_variables]
+            window_dates[i] = dateline[idx_market_current]
+
+            ## 3) Find that date on the dateline:
+            date_current = dateline[idx_market_current]
+
+            ## 4) Find that date in the firm data:
+            idx_firm_current = findfirst(date_current .== dates_firm)
+
+            ## 5) Copy firm data into the matrix:
+            if !isnothing(idx_firm_current)
+              data_window[i, idx_window_firm_variables] = data_firm[idx_firm_current, idx_data_firm_variables]
+            end
+          end
+        end
+
+        ## Assemble final WindowData:
+        @label data_assembly
+
+        ## Data:
+        data_window_final = Data_Window(
+          event_id_current,
+          event_date_current_orig,
+          event_date_current_final,
+          window_dates,
+          data_window,
+          variables_all,
+        )
+
+        event_data[event_position_lookup[event_id_current]] = data_window_final
+        event_data[findfirst(events.ids .== event_id_current)]
+        counter += 1
+      end
+    end
+  end
+
+  return event_data
+end
+
+function intersect_where(x::AbstractVector, y::AbstractVector)
+  ## Return the positions of x in y.
+  findall(in(y), x)
+end

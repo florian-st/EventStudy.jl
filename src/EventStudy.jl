@@ -19,7 +19,8 @@ using DataFrames
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Exports
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-export Events, Data_Firms, Data_Markets, Timeline
+export Events, Data_Firms, Data_Markets, Timeline, Data_Window
+export Model_Expected_Returns
 
 
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
