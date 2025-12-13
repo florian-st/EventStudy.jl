@@ -19,9 +19,9 @@ using DataFrames
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Exports
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-export Events, Data_Firms, Data_Markets, Timeline, Data_Window
+export Events, Data_Firms, Data_Markets, Timeline, Data_Window, Data_Hypothesis_Tests
 export Model_Expected_Returns
-export event_estimate
+export event_estimate, event_hypothesis_data_create
 
 
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -29,6 +29,7 @@ export event_estimate
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 include("types.jl")
 include("estimation.jl")
+include("hypothesis_testing.jl")
 
 
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

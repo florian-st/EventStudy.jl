@@ -37,3 +37,13 @@ event_window_data = Data_Window(
 
 ## Estimation:
 event_estimates = event_estimate.(event_window_data, expected_return_models, Ref(timeline))
+
+## Hypothesis testing:
+idx_estimation_success = getproperty.(event_estimates, :success)
+idx_estimate_testable = trues(length(event_estimates))
+idx_included_overall = idx_estimation_success .* idx_estimate_testable
+
+events_testable = event_estimates[idx_included_overall]
+hypothesis_data = event_hypothesis_data_create(events_testable, timeline, windows_event)
+
+

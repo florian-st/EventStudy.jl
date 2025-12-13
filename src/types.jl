@@ -329,3 +329,22 @@ struct Event_Estimate
   er::Vector{Float64}
   ar::Vector{Float64}
 end
+
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+## Hypothesis Testing
+## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@kwdef struct Data_Hypothesis_Tests
+  id_event::Vector{String}
+  R::Matrix{Float64}
+  ER::Matrix{Float64}
+  AR::Matrix{Float64}
+  SAR::Matrix{Float64}
+  STDF::Matrix{Float64}
+  DATES::Matrix{<:Union{Nothing,Date}}
+  THINVAR::Matrix{Bool}
+  CUM_PERIODS::Matrix{Bool}
+  sigma_sqrd::Vector{Float64}
+  k::Vector{Int}
+  L1::Vector{Int}
+  data_timeline::DataFrame
+end
