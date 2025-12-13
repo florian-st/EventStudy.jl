@@ -19,7 +19,7 @@ using DataFrames
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Exports
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-export Events, Data_Firms, Data_Markets
+export Events, Data_Firms, Data_Markets, Timeline
 
 
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
