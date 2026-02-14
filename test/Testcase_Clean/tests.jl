@@ -1,58 +1,52 @@
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ## Run Study
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-## Basic data:
-df_events_1 = CSV.read("test/Testcase_Clean/events_group_1.csv", DataFrame)
-df_events_2 = CSV.read("test/Testcase_Clean/events_group_2.csv", DataFrame)
 
-df_events = vcat(df_events_1, df_events_2)
-ids_group = String.(vcat(df_events_1.id_group, df_events_2.id_group))
+## Raw data as a DataFrame:
+df_events  = CSV.read("test/Testcase_Clean/events.csv", DataFrame)
+df_firms   = CSV.read("test/Testcase_Clean/markets.csv", DataFrame)
+df_markets = CSV.read("test/Testcase_Clean/firms.csv", DataFrame)
 
+## Prepare study by transforming the DataFrames into the corresponding
+## data structs. The cols_other argument is used to specify all
+## columns that are needed for any normal return model used:
+data_events = Events(df_events;
+    col_id      = "id_event",
+    col_date    = "date",
+    col_firms   = "id_firm",
+    col_markets = "id_market"
+)
 
-data_events_complete = Events(df_events, "id_event", "date", "id_firm", "id_market")
-data_markets_complete = Data_Markets(CSV.read("test/Testcase_Clean/markets.csv", DataFrame), "id_market", "date", String["ret_m"])
-data_firms_complete = Data_Firms(CSV.read("test/Testcase_Clean/firms.csv", DataFrame), "id_firm", "date", String["ret"])
+data_markets = Data_Markets(df_firms;
+    col_ids    = "id_market",
+    col_dates  = "date",
+    cols_other = String["ret_m"]
+)
 
-## Build timeline:
+data_firms = Data_Firms(df_markets;
+    col_ids    = "id_firm",
+    col_dates  = "date",
+    cols_other = String["ret"]
+)
+
+## Set parameters:
 windows_event = [(-5, 5), (0, 1)]
 windows_estimation = [(-120, -100), (-99, -6)]
 windows_post = [(6, 10)]
-timeline = Timeline(windows_estimation, windows_event, windows_post)
-
-## Construct Window Data:
 shift = 0
-expected_return_models = map(_ -> Model_Expected_Returns(:ret, Symbol[:ret_m]), data_events_complete.ids)
 
-variables_market = unique(reduce(vcat, EventStudy.variables_get_market.(expected_return_models)))
-variables_firm = unique(reduce(vcat, EventStudy.variables_get_firm.(expected_return_models)))
+## Set estimation model. Each event can be estimated using a separate
+## model. Here we just use a regular market model for all events:
+expected_return_models = map(_ -> Model_Expected_Returns(:ret, Symbol[:ret_m]), data_events.ids)
 
-event_window_data = Data_Window(
-    timeline,
-    data_events_complete,
-    data_firms_complete,
-    data_markets_complete,
-    variables_firm,
-    variables_market,
-    shift,
-)
-
-## Estimation:
-event_estimates = event_estimate.(event_window_data, expected_return_models, Ref(timeline))
-
-## Hypothesis testing:
-idx_estimation_success = getproperty.(event_estimates, :success)
-idx_estimate_testable = trues(length(event_estimates))
-idx_included_overall = idx_estimation_success .* idx_estimate_testable
-
-events_testable = event_estimates[idx_included_overall]
-hypothesis_data = event_hypothesis_data_create(events_testable, timeline, windows_event)
-
-study = event_study_run(data_events_complete, data_firms_complete, data_markets_complete, expected_return_models;
-    groups=ids_group,
-    windows_event=windows_event,
-    windows_estimation=windows_estimation,
-    windows_post=windows_post,
-    shift=shift,
+## Run the study. It returns a Tuple with (cumulative) abnormal return
+## estimates and AAR/CAAR significance tests.
+study = event_study_run(data_events, data_firms, data_markets, expected_return_models;
+    groups             = String.(df_events.id_group),
+    windows_event      = windows_event,
+    windows_estimation = windows_estimation,
+    windows_post       = windows_post,
+    shift              = shift,
 )
 
 ## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
