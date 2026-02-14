@@ -1,6 +1,14 @@
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-## Basic Data
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+"""
+    Events
+
+Holds event level information.
+
+# Fields
+- `ids::Vector{String}`: Unique identifier for each event.
+- `dates::Vector{Date}`: Date on which the event occurred.
+- `firms::Vector{PooledVector}`: Identifier of the firm associated with the event.
+- `markets::Vector{PooledVector}`: Identifier of the market associated with the event.
+"""
 struct Events
   ids::Vector{String}
   dates::Vector{Date}
@@ -8,6 +16,17 @@ struct Events
   markets::PooledVector
 end
 
+"""
+    Data_Firms
+
+Holds firm level data.
+
+# Fields
+- `ids::Vector{String}`: Unique identifier for each firm.
+- `dates::Vector{Date}`: Date on which the observation has occured.
+- `columns::Vector{PooledVector}`: Column names of the data matrix.
+- `data::Matrix{Float64}`: Matrix of firm level data.
+"""
 struct Data_Firms
   ids::PooledVector
   dates::Vector{Date}
@@ -15,6 +34,17 @@ struct Data_Firms
   data::Matrix{Float64}
 end
 
+"""
+    Data_Markets
+
+Holds market level data.
+
+# Fields
+- `ids::Vector{String}`: Unique identifier for each market.
+- `dates::Vector{Date}`: Date on which the observation has occured.
+- `columns::Vector{PooledVector}`: Column names of the data matrix.
+- `data::Matrix{Float64}`: Matrix of market level data.
+"""
 struct Data_Markets
   ids::PooledVector
   dates::Vector{Date}
@@ -22,7 +52,7 @@ struct Data_Markets
   data::Matrix{Float64}
 end
 
-function Events(df::DataFrame, col_id::String, col_date::String, col_firms::String, col_markets::String)
+function Events(df::DataFrame; col_id::String, col_date::String, col_firms::String, col_markets::String)
   @assert allunique(df[!, col_id])
 
   events = Events(
@@ -35,7 +65,7 @@ function Events(df::DataFrame, col_id::String, col_date::String, col_firms::Stri
   return events
 end
 
-function Data_Markets(df::DataFrame, col_ids::String, col_dates::String, cols_other::Vector{String})
+function Data_Markets(df::DataFrame; col_ids::String, col_dates::String, cols_other::Vector{String})
 
   dates = Date.(df[!, col_dates])
   ids = PooledArray(String.(df[!, col_ids]))
@@ -58,7 +88,7 @@ function Data_Markets(df::DataFrame, col_ids::String, col_dates::String, cols_ot
   return data_markets
 end
 
-function Data_Firms(df::DataFrame, col_ids::String, col_dates::String, cols_other::Vector{String})
+function Data_Firms(df::DataFrame; col_ids::String, col_dates::String, cols_other::Vector{String})
 
   dates = Date.(df[!, col_dates])
   ids = PooledArray(String.(df[!, col_ids]))
@@ -81,9 +111,20 @@ function Data_Firms(df::DataFrame, col_ids::String, col_dates::String, cols_othe
   return data_firms
 end
 
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-## Timeline
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+"""
+    Timeline
+
+Internal use only. Represents the timeline of an event, given a particular estimation, event and post window.
+
+# Fields
+- `estimation_absolute::Vector{Int}`: Absolute postions of the estimation window.
+- `event_absolute::Vector{Int}`: Absolute postions of the event window.
+- `post_absolute::Vector{Int}`: Absolute postions of the post window.
+- `estimation_relative::Vector{Int}`: Relative postions of the estimation window.
+- `event_relative::Vector{Int}`: Relative postions of the event window.
+- `post_relative::Vector{Int}`: Relative postions of the post window.
+- `relative_to_absolute::Dict{Int,Int}`: Dictionary translating relative to absolute.
+"""
 struct Timeline
   estimation_absolute::Vector{Int}
   event_absolute::Vector{Int}
@@ -151,9 +192,6 @@ function window_create_largest(x::Vector{Tuple{Int64,Int64}})
   return extrema(values_all)
 end
 
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-## Return Model
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct Model_Expected_Returns
   dependent::Symbol
   independent::Vector{Symbol}
@@ -305,9 +343,6 @@ function intersect_where(x::AbstractVector, y::AbstractVector)
   findall(in(y), x)
 end
 
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-## Estimaton
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct Event_Estimate
   data::Data_Window
   success::Bool
@@ -330,9 +365,6 @@ struct Event_Estimate
   ar::Vector{Float64}
 end
 
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-## Hypothesis Testing
-## - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @kwdef struct Data_Hypothesis_Tests
   id_event::Vector{String}
   R::Matrix{Float64}
