@@ -4,8 +4,8 @@
 
 ## Raw data as a DataFrame:
 df_events  = CSV.read("test/Testcase_Clean/events.csv", DataFrame)
-df_firms   = CSV.read("test/Testcase_Clean/markets.csv", DataFrame)
-df_markets = CSV.read("test/Testcase_Clean/firms.csv", DataFrame)
+df_markets = CSV.read("test/Testcase_Clean/markets.csv", DataFrame)
+df_firms   = CSV.read("test/Testcase_Clean/firms.csv", DataFrame)
 
 ## Prepare study by transforming the DataFrames into the corresponding
 ## data structs. The cols_other argument is used to specify all
@@ -17,13 +17,13 @@ data_events = Events(df_events;
     col_markets = "id_market"
 )
 
-data_markets = Data_Markets(df_firms;
+data_markets = Data_Markets(df_markets;
     col_ids    = "id_market",
     col_dates  = "date",
     cols_other = String["ret_m"]
 )
 
-data_firms = Data_Firms(df_markets;
+data_firms = Data_Firms(df_firms;
     col_ids    = "id_firm",
     col_dates  = "date",
     cols_other = String["ret"]

@@ -374,7 +374,7 @@ end
   STDF::Matrix{Float64}
   DATES::Matrix{<:Union{Nothing,Date}}
   THINVAR::Matrix{Bool}
-  CUM_PERIODS::Matrix{Bool}
+  CUM_PERIODS::Matrix{Int64}
   sigma_sqrd::Vector{Float64}
   k::Vector{Int}
   L1::Vector{Int}

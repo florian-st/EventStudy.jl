@@ -56,7 +56,11 @@ function event_study_run(data_events, data_firms, data_markets, expected_return_
 
     events_testable = event_estimates[idx_included_overall]
     hypothesis_data = event_hypothesis_data_create(events_testable, timeline, windows_event)
-    hypothesis_tests = hypothesis_tests_run(hypothesis_data, groups, windows_event, timeline)
+
+    ## Adjust groups:
+    event_ids_relevant = map(e->e.data.id, events_testable)
+    idx_group_actual = findall(x -> x in Set(event_ids_relevant), data_events.ids)
+    hypothesis_tests = hypothesis_tests_run(hypothesis_data, groups[idx_group_actual], windows_event, timeline)
 
     ## Collect data to return:
     study = (
